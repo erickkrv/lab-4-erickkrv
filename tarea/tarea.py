@@ -1,11 +1,12 @@
 """
 tarea.py — Laboratorio 4: Probabilidad y Estadística con Spotify
 Universidad Rafael Landívar · Curso de Inteligencia Artificial
-
-Completa cada función según el enunciado.
+Erick Rivas — 1116323
 """
 
 import pandas as pd
+import numpy as np
+from datasets import load_dataset
 
 
 # ---------------------------------------------------------------------------
@@ -21,8 +22,9 @@ def cargar_datos() -> pd.DataFrame:
     pd.DataFrame
         DataFrame original sin modificaciones.
     """
-    # TODO: Cargar el CSV desde la URL del enunciado y retornar el DataFrame.
-    raise NotImplementedError("Implementa cargar_datos()")
+    ds = load_dataset("maharshipandya/spotify-tracks-dataset", split="train")
+    df = ds.to_pandas()
+    return df
 
 
 def preprocesar_datos(df: pd.DataFrame) -> pd.DataFrame:
@@ -43,8 +45,12 @@ def preprocesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         DataFrame limpio y enriquecido.
     """
-    # TODO: Aplicar limpieza y crear duration_min = duration_ms / 60000.
-    raise NotImplementedError("Implementa preprocesar_datos(df)")
+    df = df.copy()
+    df = df.drop_duplicates()
+    df = df.dropna()
+    df["explicit"] = df["explicit"].astype(bool)
+    df["duration_min"] = df["duration_ms"] / 60000
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -68,8 +74,7 @@ def calcular_probabilidad_total(df: pd.DataFrame, columna: str, valor) -> float:
     float
         Probabilidad entre 0 y 1.
     """
-    # TODO: Calcular frecuencia relativa de (df[columna] == valor).
-    raise NotImplementedError("Implementa calcular_probabilidad_total(df, columna, valor)")
+    return (df[columna] == valor).mean()
 
 
 def calcular_probabilidad_condicional(
@@ -99,10 +104,10 @@ def calcular_probabilidad_condicional(
     float
         Probabilidad condicional entre 0 y 1.
     """
-    # TODO: Filtrar por condición y calcular la proporción del target.
-    raise NotImplementedError(
-        "Implementa calcular_probabilidad_condicional(df, condicion_col, condicion_valor, target_col, target_valor)"
-    )
+    subconjunto = df[df[condicion_col] == condicion_valor]
+    if len(subconjunto) == 0:
+        return 0.0
+    return (subconjunto[target_col] == target_valor).mean()
 
 
 # ---------------------------------------------------------------------------
@@ -124,8 +129,12 @@ def calcular_medidas_tendencia_central(df: pd.DataFrame, columna: str) -> dict:
     dict
         Claves: 'media', 'mediana', 'moda'.
     """
-    # TODO: Retornar un dict con media, mediana y moda.
-    raise NotImplementedError("Implementa calcular_medidas_tendencia_central(df, columna)")
+    serie = df[columna].dropna()
+    return {
+        "media": serie.mean(),
+        "mediana": serie.median(),
+        "moda": serie.mode().iloc[0]
+    }
 
 
 def calcular_medidas_dispersion(df: pd.DataFrame, columna: str) -> dict:
@@ -142,8 +151,11 @@ def calcular_medidas_dispersion(df: pd.DataFrame, columna: str) -> dict:
     dict
         Claves: 'varianza', 'desviacion_estandar'.
     """
-    # TODO: Usar ddof=0 para varianza y desviación estándar poblacional.
-    raise NotImplementedError("Implementa calcular_medidas_dispersion(df, columna)")
+    serie = df[columna].dropna()
+    return {
+        "varianza": serie.var(ddof=0),
+        "desviacion_estandar": serie.std(ddof=0)
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -164,8 +176,12 @@ def distribucion_por_categoria(df: pd.DataFrame, columna: str) -> pd.DataFrame:
     pd.DataFrame
         Columnas: [columna, 'proporcion'], ordenadas de mayor a menor.
     """
-    # TODO: Calcular value_counts(normalize=True) y devolver DataFrame.
-    raise NotImplementedError("Implementa distribucion_por_categoria(df, columna)")
+    proporciones = df[columna].value_counts(normalize=True)
+    resultado = pd.DataFrame({
+        columna: proporciones.index,
+        "proporcion": proporciones.values
+    })
+    return resultado
 
 
 def top_n_por_metrica(
@@ -195,10 +211,11 @@ def top_n_por_metrica(
     pd.DataFrame
         Columnas: [columna_grupo, columna_metrica], ordenado descendente.
     """
-    # TODO: Agrupar, agregar con la función indicada, ordenar desc y tomar top n.
-    raise NotImplementedError(
-        "Implementa top_n_por_metrica(df, columna_grupo, columna_metrica, n, funcion_agregacion)"
-    )
+    agrupado = df.groupby(columna_grupo)[columna_metrica].agg(funcion_agregacion)
+    agrupado = agrupado.sort_values(ascending=False).head(n)
+    resultado = agrupado.reset_index()
+    resultado.columns = [columna_grupo, columna_metrica]
+    return resultado
 
 
 # ---------------------------------------------------------------------------
@@ -224,8 +241,7 @@ def calcular_correlacion(
     float
         Valor entre -1 y 1.
     """
-    # TODO: Calcular correlación de Pearson entre col_x y col_y.
-    raise NotImplementedError("Implementa calcular_correlacion(df, col_x, col_y)")
+    return df[col_x].corr(df[col_y])
 
 
 def clasificar_popularidad(df: pd.DataFrame) -> pd.DataFrame:
@@ -246,5 +262,14 @@ def clasificar_popularidad(df: pd.DataFrame) -> pd.DataFrame:
     pd.DataFrame
         DataFrame con la columna 'categoria_popularidad' agregada.
     """
-    # TODO: Calcular Q1 y Q3 y clasificar en Baja/Media/Alta.
-    raise NotImplementedError("Implementa clasificar_popularidad(df)")
+    df = df.copy()
+    q1 = df["popularity"].quantile(0.25)
+    q3 = df["popularity"].quantile(0.75)
+
+    condiciones = [
+        df["popularity"] <= q1,
+        df["popularity"] >= q3
+    ]
+    categorias = ["Baja", "Alta"]
+    df["categoria_popularidad"] = np.select(condiciones, categorias, default="Media")
+    return df
