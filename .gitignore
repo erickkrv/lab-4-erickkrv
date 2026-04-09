@@ -1,0 +1,60 @@
+# =========================
+# PYTHON
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+
+# =========================
+# JUPYTER
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# DATASETS / ARCHIVOS PESADOS
+# =========================
+*.csv
+*.xlsx
+*.parquet
+*.json
+!resultado_autograder.json
+
+# ⚠️ EXCEPCIÓN (tu autograder usa este archivo)
+!resultado_autograder.json
+
+# =========================
+# ARCHIVOS GENERADOS
+# =========================
+resultado_autograder.json
+*.log
+*.tmp
+
+# =========================
+# SISTEMA
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# TESTS / COVERAGE
+# =========================
+.pytest_cache/
+.coverage
+htmlcov/
+
+# =========================
+# NBEXECUTION (cuando ejecutas notebooks)
+# =========================
+*.nbconvert.ipynb
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/

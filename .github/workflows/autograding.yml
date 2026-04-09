@@ -1,0 +1,34 @@
+name: Autograding Lab 4
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: |
+          pytest test_tarea.py --maxfail=1 --disable-warnings -q || true
+
+      - name: Run autograder
+        run: |
+          python autograder/advanced_grader.py
+
+      - name: Run semantic validation
+        run: |
+          python autograder/semantic_validator.py
